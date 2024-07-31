@@ -1,4 +1,6 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
+import { PublicClientApplication, Configuration, AuthenticationResult } from "@azure/msal-browser";
+
 
 export class CustomLoginControl
 implements ComponentFramework.StandardControl<IInputs, IOutputs>
@@ -10,10 +12,25 @@ private inputElement: HTMLInputElement;
 private _container: HTMLDivElement;
 private _context: ComponentFramework.Context<IInputs>;
 private _refreshData: EventListenerOrEventListenerObject;
+
+private loginButtonElement: HTMLButtonElement;
+
+private msalInstance: PublicClientApplication;
+
 /**
    * Empty constructor.
 */
-constructor() {}
+constructor() {
+
+   const msalConfig: Configuration = {
+      auth: {
+          clientId: "<>",
+          authority: "https://login.microsoftonline.com/<>",
+          redirectUri: "http://localhost:8181"  // Update this with your redirect URI
+      }
+  };
+  this.msalInstance = new PublicClientApplication(msalConfig);
+}
 
 /**
    * Used to initialize the control instance. Controls can kick off remote server calls 
@@ -48,16 +65,27 @@ public init(
    this.inputElement.setAttribute("type", "range");
    this.inputElement.addEventListener("input", this._refreshData);
 
+   this.loginButtonElement = document.createElement("button");
+   
+   this.loginButtonElement.setAttribute("name","btnLogin");
+   this.loginButtonElement.setAttribute("id","btnLogin");
+   this.loginButtonElement.textContent ="Login";
+   this.loginButtonElement.onclick = this.handleLogin.bind(this);
+
+   
+
    //setting the max and min values for the control.
    this.inputElement.setAttribute("min", "1");
    this.inputElement.setAttribute("max", "1000");
    this.inputElement.setAttribute("class", "linearslider");
    this.inputElement.setAttribute("id", "linearrangeinput");
+   this.inputElement.setAttribute("style", "display:none");
 
    // creating a HTML label element that shows the value that is set on the linear range control
    this.labelElement = document.createElement("label");
    this.labelElement.setAttribute("class", "LinearRangeLabel");
    this.labelElement.setAttribute("id", "lrclabel");
+   this.labelElement.setAttribute("style", "display:none");
 
    // retrieving the latest value from the control and setting it to the HTMl elements.
    this._value = context.parameters.sampleProperty.raw!;
@@ -74,7 +102,22 @@ public init(
    // appending the HTML elements to the control's HTML container element.
    this._container.appendChild(this.inputElement);
    this._container.appendChild(this.labelElement);
+   this._container.appendChild(this.loginButtonElement);
    container.appendChild(this._container);
+
+   this.msalInstance.initialize();
+}
+
+private async handleLogin() {
+   try {
+       const loginResponse: AuthenticationResult = await this.msalInstance.loginPopup({
+           scopes: ["user.read"]
+       });
+       console.log("Login successful!", loginResponse);
+       // Use loginResponse.accessToken for further authorization
+   } catch (error) {
+       console.error("Login failed", error);
+   }
 }
 
 public refreshData(evt: Event): void {
