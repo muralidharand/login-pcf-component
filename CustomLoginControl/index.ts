@@ -24,9 +24,8 @@ constructor() {
 
    const msalConfig: Configuration = {
       auth: {
-          clientId: "<>",
-          authority: "https://login.microsoftonline.com/<>",
-          redirectUri: "http://localhost:8181"  // Update this with your redirect URI
+          clientId: "3eac1b97-45fb-42bc-afe3-770ee95b2cc0",
+          authority: "https://login.microsoftonline.com/common"
       }
   };
   this.msalInstance = new PublicClientApplication(msalConfig);
@@ -110,6 +109,7 @@ public init(
 
 private async handleLogin() {
    try {
+      alert(12);
        const loginResponse: AuthenticationResult = await this.msalInstance.loginPopup({
            scopes: ["user.read"]
        });
